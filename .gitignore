@@ -1,0 +1,21 @@
+# Secrets and sensitive files
+.zsh_secrets
+.secrets
+*.key
+*.pem
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.backup
+*.bak
+*.old
