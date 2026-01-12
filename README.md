@@ -37,15 +37,6 @@ My personal zsh configuration with detailed comments explaining each section.
    source ~/.zshrc
    ```
 
-## Customization
-
-Each section in `.zshrc` includes comments explaining:
-- What it does
-- Whether to keep or remove it
-- Alternative options
-
-Review the comments and remove/modify sections based on your needs.
-
 ## Secrets Management
 
 **Never commit API keys or secrets to this repository!**
