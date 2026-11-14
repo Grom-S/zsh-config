@@ -13,6 +13,8 @@ export PATH=$HOME/.local/bin:$PATH
 # OH MY ZSH CONFIGURATION
 # ============================================================================
 export ZSH="$HOME/.oh-my-zsh"
+# Completions: Homebrew (brew, gh, ...) and own tools. Must be set before compinit runs.
+fpath=(/opt/homebrew/share/zsh/site-functions ${${(%):-%x}:A:h}/completions $fpath)
 ZSH_THEME="robbyrussell"
 plugins=(
   git
@@ -25,34 +27,24 @@ source $ZSH/oh-my-zsh.sh
 # NVM CONFIGURATION
 # ============================================================================
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" --no-use
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
 
-# Auto-switch Node version based on .nvmrc
+# Default Node = newest installed version (same as nvm alias "node"), set without running nvm
+() {
+  setopt local_options numeric_glob_sort
+  local latest=("$NVM_DIR"/versions/node/v*(N[-1]))
+  [[ -n $latest ]] && path=("$latest/bin" $path)
+}
+
+# Switch Node version only when the current folder has a .nvmrc
 autoload -U add-zsh-hook
 load-nvmrc() {
-  [[ -a .nvmrc ]] || return
-  local node_version="$(nvm version)"
-  local nvmrc_path="$(nvm_find_nvmrc)"
- 
-  if [ -n "$nvmrc_path" ]; then
-    local nvmrc_node_version=$(nvm version "$(cat "${nvmrc_path}")")
- 
-    if [ "$nvmrc_node_version" = "N/A" ]; then
-      nvm install
-    elif [ "$nvmrc_node_version" != "$node_version" ]; then
-      nvm use
-    fi
-  elif [ "$node_version" != "$(nvm version default)" ]; then
-    echo "Reverting to nvm default version"
-    nvm use default
-  fi
+  [[ -f .nvmrc ]] || return
+  nvm use --silent || nvm install
 }
 add-zsh-hook chpwd load-nvmrc
 load-nvmrc
-
-# Add current npm bin dir to path
-export PATH=$(npm bin):$PATH
 
 # ============================================================================
 # PNPM CONFIGURATION
@@ -104,10 +96,14 @@ export HARNESS_REQUIRED_TOOLS=fallow,jq
 
 
 export PW_TEST_CONNECT_WS_ENDPOINT="$DEVENV_BROWSER_WS"
+# export STG_TOKEN_TMP=
 
 # Aliases
 alias hs=harness
 alias dt='code /Users/grom/code/grom/devtools.code-workspace'
+alias lr='open -a MarkEdit ~/.cache/claude/last-reply.md'
+# local decision model for the clean-code post-commit hook (stop: pkill llama-server)
+alias cc-llm='llama-server -m ~/models/h2o-lightning-4b-Q4_K_M.gguf --host 127.0.0.1 --port 8091 -c 8192 -ngl 99'
 
 # eza aliases
 alias ls='eza --icons'
