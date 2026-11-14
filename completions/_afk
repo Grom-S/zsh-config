@@ -1,0 +1,128 @@
+#compdef afk
+
+_afk_profile() {
+  local i
+  for ((i = 1; i < $#words; i++)); do
+    [[ $words[i] == --profile ]] && { print -r -- $words[i+1]; return }
+    [[ $words[i] == --profile=* ]] && { print -r -- ${words[i]#--profile=}; return }
+  done
+  print -r -- $AFK_PROFILE
+}
+
+_afk_profiles() {
+  local -a profiles=(personal work)
+  _describe -t profiles 'profile' profiles
+}
+
+_afk_tasks() {
+  local profile=$(_afk_profile)
+  if [[ -z $profile ]]; then
+    _message 'pass --profile or set AFK_PROFILE to complete tasks'
+    return 1
+  fi
+  local -a tasks
+  tasks=(${(f)"$(command afk status --all --profile $profile 2>/dev/null |
+    awk 'NR==1 { t = index($0, "TITLE"); next } { gsub(":", "\\:", $0); print $1 ":" substr($0, t) }')"})
+  _describe -t tasks 'task' tasks
+}
+
+_afk() {
+  local -a commands
+  commands=(
+    'daemon:Run the afk daemon'
+    'new:Create a task'
+    'refine:Refine a task with a preset'
+    'reviewers:Choose the reviewers of a task'
+    'approve:Approve a task'
+    'unblock:Unblock a task'
+    'pause:Pause a task'
+    'resume:Resume a task'
+    'takeover:Take over a task from the agent'
+    'handback:Hand a task back to the agent'
+    'feedback:Send feedback on a task'
+    'prompt:Show a named prompt of a task'
+    'integrate:Integrate a task'
+    'mark-merged:Mark a task as merged'
+    'refresh-prs:Refresh pull request state'
+    'drop:Drop a task'
+    'remove:Remove a task'
+    'watch:Watch a task'
+    'status:List tasks'
+    'show:Show a task'
+  )
+
+  local profile_opt='--profile=[profile]:profile:_afk_profiles'
+  local context state state_descr line
+  typeset -A opt_args
+  _arguments -C \
+    '1: :->command' \
+    '*:: :->args' && return
+
+  case $state in
+    command)
+      _describe -t commands 'afk command' commands
+      ;;
+    args)
+      case $words[1] in
+        daemon)
+          _arguments \
+            '--dev[development mode]' \
+            '--config=[config file]:file:_files' \
+            '--port=[port]:port: '
+          ;;
+        new)
+          _arguments \
+            '1:title: ' \
+            '--notes=[notes]:text: ' \
+            $profile_opt
+          ;;
+        refine)
+          _arguments \
+            '1:task:_afk_tasks' \
+            '--preset=[preset]:preset: ' \
+            '--branch=[branch]:branch: ' \
+            '--from=[branch]:branch: ' \
+            $profile_opt
+          ;;
+        reviewers)
+          _arguments \
+            '1:task:_afk_tasks' \
+            '*:reviewer: ' \
+            '--none[no reviewers]' \
+            $profile_opt
+          ;;
+        approve|takeover|integrate|mark-merged|drop|watch|show)
+          _arguments '1:task:_afk_tasks' $profile_opt
+          ;;
+        unblock|resume|handback|feedback)
+          _arguments \
+            '1:task:_afk_tasks' \
+            '--message=[message]:text: ' \
+            $profile_opt
+          ;;
+        pause)
+          _arguments \
+            '1:task:_afk_tasks' \
+            '(--wrap --kill)--finish[finish the current phase]' \
+            '(--finish --kill)--wrap[wrap up]' \
+            '(--finish --wrap)--kill[kill now]' \
+            $profile_opt
+          ;;
+        prompt)
+          _arguments '1:task:_afk_tasks' '2:prompt name: ' $profile_opt
+          ;;
+        remove)
+          _arguments '1:task:_afk_tasks' '--yes[skip the confirmation]' $profile_opt
+          ;;
+        status)
+          _arguments '--all[include closed tasks]' $profile_opt
+          ;;
+        refresh-prs)
+          _arguments $profile_opt
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_afk "$@"

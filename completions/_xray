@@ -1,0 +1,39 @@
+#compdef xray
+
+# Extra words (like WORKTREE) are passed as arguments; _arguments adds its own, so use named wrappers.
+_xray_revisions() {
+  local repo=${words[2]/#\~/$HOME}
+  [[ -d $repo ]] || repo=.
+  local -a revisions expl
+  revisions=(${(f)"$(git -C $repo for-each-ref --format='%(refname:short)' refs/heads refs/remotes 2>/dev/null)"} HEAD $extra_revisions)
+  _wanted revisions expl 'revision' compadd -a revisions
+}
+
+_xray_base() {
+  local -a extra_revisions=()
+  _xray_revisions
+}
+
+_xray_head() {
+  local -a extra_revisions=(WORKTREE)
+  _xray_revisions
+}
+
+_xray_target() {
+  _alternative \
+    'commands:command:(start stop help)' \
+    'folders:repo folder:_files -/'
+}
+
+_xray() {
+  if (( CURRENT > 2 )) && [[ $words[2] == (start|stop|help) ]]; then
+    return
+  fi
+
+  _arguments \
+    '1:repo or command:_xray_target' \
+    '2:base revision:_xray_base' \
+    '3:head revision:_xray_head'
+}
+
+_xray "$@"

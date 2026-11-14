@@ -1,0 +1,100 @@
+#compdef devenv
+
+# Slugs are the folder names in the envs dir (same rule as devenv itself).
+# `devenv ls` is not used: it takes about 30 seconds.
+_devenv_slugs() {
+  local -a slugs
+  slugs=(${DEVENV_ENVS_DIR:-$HOME/code/envs}/*(N/:t))
+  _describe -t slugs 'environment' slugs
+}
+
+_devenv_presets() {
+  local -a presets
+  presets=(${(f)"$(command devenv presets 2>/dev/null)"})
+  _describe -t presets 'preset' presets
+}
+
+_devenv() {
+  local -a commands
+  commands=(
+    'new:Create an environment manifest'
+    'up:Start it (worktrees, containers, route)'
+    'down:Stop containers, keep data and worktrees'
+    'archive:Reclaim its disk, keep it resumable'
+    'rm:Destroy everything for this environment'
+    'ls:List environments and their state'
+    'presets:List presets for new --preset'
+    'url:Print the environment URL'
+    'path:Print the environment directory'
+    'logs:Show logs'
+    'ps:Show containers'
+    'psql:Open a psql shell, or run -c SQL'
+    'exec:Run a command in a service'
+    'open:Open the workspace in VS Code'
+    'cd:cd into the environment'
+    'shell-init:Shell function enabling devenv cd'
+    'trust:Trust the local CA (one time, needs sudo)'
+    'untrust:Remove the local CA again'
+    'proxy:Manage the shared Caddy proxy'
+    'browser:Manage the shared Playwright server'
+    'serve:Web UI'
+  )
+
+  local context state state_descr line
+  typeset -A opt_args
+  _arguments -C \
+    '1: :->command' \
+    '*:: :->args' && return
+
+  case $state in
+    command)
+      _describe -t commands 'devenv command' commands
+      ;;
+    args)
+      case $words[1] in
+        new)
+          _arguments \
+            '1:new slug: ' \
+            '--preset=[preset]:preset:_devenv_presets' \
+            '--branch=[branch]:branch: ' \
+            '--from=[branch off unmerged work]:branch: ' \
+            '--repo=[repo for worktrees-only environment]:repo:_files -/'
+          ;;
+        up)
+          _arguments \
+            '1:environment:_devenv_slugs' \
+            '--agent-write=[directory]:directory:_files -/'
+          ;;
+        down|archive|rm|url|path|ps|open|cd)
+          _arguments '1:environment:_devenv_slugs'
+          ;;
+        logs)
+          _arguments \
+            '1:environment:_devenv_slugs' \
+            '2:service: ' \
+            '-f[follow]'
+          ;;
+        psql)
+          _arguments '1:environment:_devenv_slugs' '*:psql argument: '
+          ;;
+        exec)
+          _arguments \
+            '1:environment:_devenv_slugs' \
+            '2:service: ' \
+            '*::command:_normal'
+          ;;
+        ls)
+          _arguments '--json[machine-readable output]'
+          ;;
+        proxy)
+          _arguments '1:action:(up down reload)'
+          ;;
+        browser)
+          _arguments '1:action:(up down status logs)'
+          ;;
+      esac
+      ;;
+  esac
+}
+
+_devenv "$@"
