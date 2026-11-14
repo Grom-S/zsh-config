@@ -114,3 +114,11 @@ alias ls='eza --icons'
 alias ll='eza -l --icons --git --header'
 alias la='eza -la --icons --git --header'
 alias lt='eza --icons --tree --level=2'
+
+# zoxide: smarter cd (z, zi)
+eval "$(zoxide init zsh)"
+
+# fzf: fuzzy finder key bindings (Ctrl-R history, Ctrl-T files, Alt-C folders)
+# Alt-C lists folders with fd: faster, and skips node_modules and .gitignore entries
+export FZF_ALT_C_COMMAND='fd --type d --exclude node_modules'
+source <(fzf --zsh)
