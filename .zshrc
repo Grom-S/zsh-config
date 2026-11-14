@@ -108,3 +108,9 @@ export PW_TEST_CONNECT_WS_ENDPOINT="$DEVENV_BROWSER_WS"
 # Aliases
 alias hs=harness
 alias dt='code /Users/grom/code/grom/devtools.code-workspace'
+
+# eza aliases
+alias ls='eza --icons'
+alias ll='eza -l --icons --git --header'
+alias la='eza -la --icons --git --header'
+alias lt='eza --icons --tree --level=2'
